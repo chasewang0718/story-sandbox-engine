@@ -1,6 +1,6 @@
 ## 剧情推演沙盒引擎（MVP）
 
-完整技术方案、设计原则与路线图见 **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)**。
+完整技术方案见 **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)**；**分阶段实施方案与验收标准**见 **[docs/IMPLEMENTATION_PLAN.md](./docs/IMPLEMENTATION_PLAN.md)**。
 
 这是一个最小可运行的剧情推演控制台，当前版本包含：
 

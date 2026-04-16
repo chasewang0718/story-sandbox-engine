@@ -2,6 +2,8 @@
 
 本文档固化项目的技术方案：包含**已实现能力**、**设计原则**与**规划中的方向**，便于对齐长期目标与迭代边界。
 
+**分阶段实施路线与验收标准**见 **[IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)**。
+
 ---
 
 ## 一、产品愿景与核心目标
@@ -165,3 +167,4 @@ docs/
 
 - **README.md**：安装、启动、API 速查、数据库初始化命令。
 - **docs/ARCHITECTURE.md（本文）**：完整技术方案、原则与路线图，随迭代更新。
+- **docs/IMPLEMENTATION_PLAN.md**：按阶段的实施方案、交付物与验收标准。
