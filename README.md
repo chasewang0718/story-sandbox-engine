@@ -1,5 +1,7 @@
 ## 剧情推演沙盒引擎（MVP）
 
+完整技术方案、设计原则与路线图见 **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)**。
+
 这是一个最小可运行的剧情推演控制台，当前版本包含：
 
 - 回合制 Tick 执行器（导演干预 -> 双方意图 -> 冲突结算 -> 状态更新）
@@ -64,16 +66,18 @@ app/
     tick/route.ts
     timeline/branch/route.ts
   page.tsx
+docs/
+  ARCHITECTURE.md
 lib/
   engine/
     runTick.ts
     schema.ts
     store.ts
+    persistence.ts
+  supabase/
+    client.ts
 ```
 
 ## 下一步建议
 
-- 接入 Supabase（世界状态与事件持久化）
-- 使用 LangGraph.js 重构 Tick 执行为可回滚图流程
-- 增加裁判规则库（代码规则 + LLM 语义判定）
-- 接入 Langfuse 追踪每个节点 token 与耗时
+详见 [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) 第五节。方向包括：LLM 结构化接入、Trigger.dev 长任务、Clerk + RLS、Langfuse、裁判规则库与可选 LangGraph 等。
