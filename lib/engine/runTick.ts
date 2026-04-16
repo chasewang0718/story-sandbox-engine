@@ -1,13 +1,12 @@
 import {
-  Actor,
   ActorIntent,
   DirectorInput,
   EventLog,
-  actorIntentSchema,
   directorInputSchema,
   eventLogSchema,
 } from "./schema";
 import { getState, pushEvent, setState } from "./store";
+import { generateActorIntent } from "@/lib/llm/intents";
 
 type TickResult = {
   worldState: ReturnType<typeof getState>;
@@ -25,41 +24,6 @@ function createEvent(
   event: Omit<EventLog, "timestamp" | "timelineLabel">,
 ): EventLog {
   return eventLogSchema.parse({ ...event, timelineLabel, timestamp: nowIso() });
-}
-
-function generateIntent(actor: Actor, target: Actor, intervention: string): ActorIntent {
-  const text = intervention.toLowerCase();
-  if (text.includes("大雨") || text.includes("rain")) {
-    return actorIntentSchema.parse({
-      actorId: actor.id,
-      action: "move",
-      targetLocation: actor.id === "hero" ? "covered_corridor" : "archer_tower",
-      rationale: `${actor.name} seeks a covered position due to heavy rain.`,
-    });
-  }
-
-  if (text.includes("刺客") || text.includes("assassin")) {
-    return actorIntentSchema.parse({
-      actorId: actor.id,
-      action: "observe",
-      rationale: `${actor.name} scans for hidden threats before committing.`,
-    });
-  }
-
-  if (actor.energy < 35) {
-    return actorIntentSchema.parse({
-      actorId: actor.id,
-      action: "defend",
-      rationale: `${actor.name} conserves energy and reduces risk.`,
-    });
-  }
-
-  return actorIntentSchema.parse({
-    actorId: actor.id,
-    action: "attack",
-    targetActorId: target.id,
-    rationale: `${actor.name} presses advantage against ${target.name}.`,
-  });
 }
 
 function resolveConflict(heroIntent: ActorIntent, villainIntent: ActorIntent): {
@@ -95,7 +59,7 @@ function resolveConflict(heroIntent: ActorIntent, villainIntent: ActorIntent): {
   return { heroHpDelta: 0, villainHpDelta: 0, summary: "双方都在试探与调整，没有直接交战。" };
 }
 
-export function runTick(input: DirectorInput): TickResult {
+export async function runTick(input: DirectorInput): Promise<TickResult> {
   const parsedInput = directorInputSchema.parse(input);
   const current = getState();
   const nextTick = current.tick + 1;
@@ -109,8 +73,10 @@ export function runTick(input: DirectorInput): TickResult {
     payload: { intervention: parsedInput.intervention },
   });
 
-  const heroIntent = generateIntent(hero, villain, parsedInput.intervention);
-  const villainIntent = generateIntent(villain, hero, parsedInput.intervention);
+  const [heroIntent, villainIntent] = await Promise.all([
+    generateActorIntent(hero, villain, parsedInput.intervention),
+    generateActorIntent(villain, hero, parsedInput.intervention),
+  ]);
 
   const intentEvent = createEvent(current.timelineLabel, {
     tick: nextTick,

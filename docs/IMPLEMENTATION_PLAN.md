@@ -40,18 +40,23 @@ Phase 7  事件驱动世界与 NPC LOD（规模化）
 
 ## Phase 1：LLM 接入（Vercel AI SDK + 结构化输出）
 
+**状态：已实现（可继续调 Prompt 与模型）**
+
 **目标**：在**不破坏**现有无密钥开发体验的前提下，让「角色意图」可由模型生成，并严格落在 Zod 内。
 
 ### 1.1 交付物
 
-- 依赖：`ai` 及至少一家 Provider（如 `@ai-sdk/openai`）。
-- 模块建议：
-  - `lib/llm/client.ts`：统一创建 model（读环境变量）。
-  - `lib/llm/intents.ts`：`generateActorIntent(...)` 使用 `generateObject` + `actorIntentSchema`。
-- 环境变量（写入 `.env.example`，勿提交密钥）：
-  - `OPENAI_API_KEY`（或按 Provider 命名）
-  - `AI_MODEL_INTENT`（默认小模型，高频）
-- **特性开关**：`USE_LLM_INTENTS=true|false`；为 `false` 或未配置密钥时，**回退当前规则意图**（保证 CI/本地测试稳定）。
+- 依赖：`ai`、`@ai-sdk/openai`（已加入 `package.json`）。
+- 模块：
+  - `lib/llm/config.ts`：`shouldUseLlmIntents`、`AI_MODEL_INTENT`
+  - `lib/llm/charter.ts`：`DEFAULT_CHARTER_SUMMARY`（Phase 3 前占位）
+  - `lib/llm/intents.ts`：`generateActorIntentWithLlm`、`generateActorIntent`（失败回退规则）
+  - `lib/engine/ruleBasedIntents.ts`：原规则意图，供回退与无 Key 场景
+- 环境变量（见 `.env.example`）：
+  - `OPENAI_API_KEY`
+  - `USE_LLM_INTENTS`（`true` 时启用 LLM）
+  - `AI_MODEL_INTENT`（默认 `gpt-4o-mini`）
+- **`runTick` 已为 async**，无 Key 或开关关闭时走规则路径（CI 稳定）。
 
 ### 1.2 改造点
 

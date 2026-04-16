@@ -57,6 +57,10 @@ npm run start
 -- supabase/sql/0002_event_logs_timeline.sql
 ```
 
+## LLM 意图生成（Phase 1，可选）
+
+在 `.env.local` 中配置 `OPENAI_API_KEY`，并设置 `USE_LLM_INTENTS=true` 后，每个 Tick 会通过 **Vercel AI SDK** `generateObject` 按 `actorIntentSchema` 生成双方意图；默认模型为 `AI_MODEL_INTENT`（未设置时为 `gpt-4o-mini`）。未启用或未配置密钥时自动使用规则意图（便于本地与 CI）。
+
 ## 当前目录结构
 
 ```text
@@ -71,9 +75,14 @@ docs/
 lib/
   engine/
     runTick.ts
+    ruleBasedIntents.ts
     schema.ts
     store.ts
     persistence.ts
+  llm/
+    config.ts
+    charter.ts
+    intents.ts
   supabase/
     client.ts
 ```

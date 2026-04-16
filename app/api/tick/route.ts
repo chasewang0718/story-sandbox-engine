@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       setState(createInitialState(timeline));
     }
 
-    const result = runTick({ intervention: input.intervention });
+    const result = await runTick({ intervention: input.intervention });
 
     if (shouldUseSupabasePersistence()) {
       await persistTickToDb(result.worldState, result.events);

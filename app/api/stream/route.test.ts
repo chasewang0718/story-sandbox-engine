@@ -48,7 +48,7 @@ describe("/api/stream route", () => {
   });
 
   it("streams connected frame and backlog tick events", async () => {
-    runTick({ intervention: "天降大雨" });
+    await runTick({ intervention: "天降大雨" });
     const response = await GET(new Request("http://localhost:3001/api/stream"));
     const streamData = await readAvailableChunks(response);
 

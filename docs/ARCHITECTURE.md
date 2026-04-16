@@ -53,10 +53,10 @@
 - **默认端口 3001**：`npm run dev` 与 `npm run start` 均使用 `-p 3001`。
 - **SSE**：`/api/stream` 向客户端推送推演事件。
 
-### 引擎内核（当前以规则占位为主）
+### 引擎内核
 
 - **Zod**：`worldState`、`actorIntent`、`eventLog`、`directorInput`、分支输入等 schema。
-- **`runTick`**：导演干预 → 双方意图 → 冲突结算 → 更新状态；事件携带 **`timelineLabel`**。
+- **`runTick`（async）**：导演干预 → 双方意图（**可选 OpenAI 结构化生成**，见 `lib/llm/intents.ts`；关闭或未配置密钥时回退 **规则意图** `ruleBasedIntents`）→ 冲突结算 → 更新状态；事件携带 **`timelineLabel`**。
 - **`store`**：进程内全局状态、事件历史、SSE 订阅；`createInitialState(timelineLabel)`；测试用 `resetEngineStoreForTests`。
 
 ### 持久化（可选 Supabase）

@@ -7,8 +7,8 @@ describe("runTick", () => {
     resetEngineStoreForTests();
   });
 
-  it("increments tick and updates weather/location when intervention is heavy rain", () => {
-    const result = runTick({ intervention: "天降大雨" });
+  it("increments tick and updates weather/location when intervention is heavy rain", async () => {
+    const result = await runTick({ intervention: "天降大雨" });
 
     expect(result.worldState.tick).toBe(1);
     expect(result.worldState.weather).toBe("storm");
@@ -30,14 +30,14 @@ describe("runTick", () => {
     expect(getHistory()).toHaveLength(4);
   });
 
-  it("throws when intervention is empty", () => {
-    expect(() => runTick({ intervention: "" })).toThrow();
+  it("throws when intervention is empty", async () => {
+    await expect(runTick({ intervention: "" })).rejects.toThrow();
   });
 
-  it("keeps state progression consistent across multiple ticks", () => {
-    const first = runTick({ intervention: "双方开始试探" });
-    const second = runTick({ intervention: "神秘刺客出现" });
-    const third = runTick({ intervention: "天降大雨" });
+  it("keeps state progression consistent across multiple ticks", async () => {
+    const first = await runTick({ intervention: "双方开始试探" });
+    const second = await runTick({ intervention: "神秘刺客出现" });
+    const third = await runTick({ intervention: "天降大雨" });
 
     expect(first.worldState.tick).toBe(1);
     expect(second.worldState.tick).toBe(2);
