@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 剧情推演沙盒引擎（MVP）
 
-## Getting Started
+这是一个最小可运行的剧情推演控制台，当前版本包含：
 
-First, run the development server:
+- 回合制 Tick 执行器（导演干预 -> 双方意图 -> 冲突结算 -> 状态更新）
+- 强结构化输出（`Zod` schema）
+- 导演控制台（`Next.js` App Router）
+- 实时日志推送（`SSE`）
+
+## 快速启动
+
+1. 安装依赖：
+
+```bash
+npm install
+```
+
+2. 启动开发环境（默认端口 **3001**）：
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+生产构建并启动（同样默认 **3001**）：
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm run start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. 打开 [http://localhost:3001](http://localhost:3001)
 
-## Learn More
+## API
 
-To learn more about Next.js, take a look at the following resources:
+- `GET /api/tick?timeline=mainline`：按时间线加载最新快照与最近事件（默认 `mainline`）
+- `POST /api/tick`：运行一个新回合
+  - body: `{ "intervention": "天降大雨", "timelineLabel": "mainline" }`（`timelineLabel` 可选）
+  - 也可配合 query：`POST /api/tick?timeline=mainline`
+- `GET /api/stream?timeline=mainline`：按时间线订阅 SSE（只推送该分支事件）
+- `POST /api/timeline/branch`（需 Supabase）：从某一 tick 分叉出新时间线
+  - body: `{ "fromTimeline": "mainline", "atTick": 2, "newTimelineLabel": "my-branch" }`（名称可省略，自动生成）
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Supabase 持久化（可选启用）
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+当设置了 `SUPABASE_URL` 与 `SUPABASE_SERVICE_ROLE_KEY` 后：
 
-## Deploy on Vercel
+- `GET /api/tick` 会优先从 `world_states`/`event_logs` 读取
+- `POST /api/tick` 会在每个 Tick 后写入快照与事件日志
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+初始化数据库可执行：
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```sql
+-- 依次运行：
+-- supabase/sql/0001_engine_core.sql
+-- supabase/sql/0002_event_logs_timeline.sql
+```
+
+## 当前目录结构
+
+```text
+app/
+  api/
+    stream/route.ts
+    tick/route.ts
+    timeline/branch/route.ts
+  page.tsx
+lib/
+  engine/
+    runTick.ts
+    schema.ts
+    store.ts
+```
+
+## 下一步建议
+
+- 接入 Supabase（世界状态与事件持久化）
+- 使用 LangGraph.js 重构 Tick 执行为可回滚图流程
+- 增加裁判规则库（代码规则 + LLM 语义判定）
+- 接入 Langfuse 追踪每个节点 token 与耗时
