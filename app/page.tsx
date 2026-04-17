@@ -11,6 +11,12 @@ type BootPayload = {
   timeline?: string;
 };
 
+type IntentConsistencyAssessment = {
+  actorId: string;
+  score: number;
+  reasons: string[];
+};
+
 const fallbackState: WorldState = {
   tick: 0,
   weather: "clear",
@@ -28,6 +34,40 @@ function parseDirectorEffectsFromEvent(event: EventLog): DirectorEffects | null 
   const candidate = payloadRecord.parsedEffects;
   const parsed = directorEffectsSchema.safeParse(candidate);
   return parsed.success ? parsed.data : null;
+}
+
+function parseIntentConsistencyFromEvent(event: EventLog): IntentConsistencyAssessment[] {
+  if (event.type !== "intent_generated") {
+    return [];
+  }
+
+  const payloadRecord = event.payload as Record<string, unknown>;
+  const candidate = payloadRecord.consistencyAssessments;
+  if (!Array.isArray(candidate)) {
+    return [];
+  }
+
+  return candidate
+    .filter((item) => {
+      if (typeof item !== "object" || item === null) {
+        return false;
+      }
+      const record = item as Record<string, unknown>;
+      return (
+        typeof record.actorId === "string" &&
+        typeof record.score === "number" &&
+        Array.isArray(record.reasons) &&
+        record.reasons.every((reason) => typeof reason === "string")
+      );
+    })
+    .map((item) => {
+      const record = item as Record<string, unknown>;
+      return {
+        actorId: String(record.actorId),
+        score: Number(record.score),
+        reasons: (record.reasons as string[]).slice(0, 3),
+      };
+    });
 }
 
 const directorTagLabels: Record<string, string> = {
@@ -255,6 +295,7 @@ export default function Home() {
           {events.length === 0 ? <p>暂无事件</p> : null}
           {events.map((event, index) => {
             const parsedEffects = parseDirectorEffectsFromEvent(event);
+            const consistencyAssessments = parseIntentConsistencyFromEvent(event);
             return (
               <article key={`${event.timestamp}-${index}`} style={{ padding: "8px", borderRadius: "8px", border: "1px solid #3f3f46" }}>
                 <p>
@@ -283,6 +324,22 @@ export default function Home() {
                     </div>
                     <p>目标角色: {parsedEffects.targetActorIds.length > 0 ? parsedEffects.targetActorIds.join(", ") : "未指定"}</p>
                     <p style={{ opacity: 0.85 }}>原始输入: {parsedEffects.notes}</p>
+                  </div>
+                ) : null}
+                {consistencyAssessments.length > 0 ? (
+                  <div style={{ marginTop: "6px", padding: "8px", background: "#111827", borderRadius: "6px", fontSize: "12px", display: "grid", gap: "6px" }}>
+                    <p>
+                      <strong>行为一致性评分</strong>
+                    </p>
+                    {consistencyAssessments.map((assessment) => (
+                      <div key={assessment.actorId} style={{ border: "1px solid #374151", borderRadius: "6px", padding: "6px" }}>
+                        <p>
+                          角色: <strong>{assessment.actorId}</strong> | Score:{" "}
+                          <span style={{ color: assessment.score >= 75 ? "#22c55e" : assessment.score >= 55 ? "#f59e0b" : "#ef4444" }}>{assessment.score}</span>
+                        </p>
+                        <p style={{ opacity: 0.9 }}>判定: {assessment.reasons.join(" / ")}</p>
+                      </div>
+                    ))}
                   </div>
                 ) : null}
               </article>
