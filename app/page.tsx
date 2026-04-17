@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { EventLog, WorldState } from "@/lib/engine/schema";
+import { directorEffectsSchema } from "@/lib/engine/schema";
+import type { DirectorEffects, EventLog, WorldState } from "@/lib/engine/schema";
 
 type BootPayload = {
   worldState: WorldState;
@@ -16,6 +17,17 @@ const fallbackState: WorldState = {
   timelineLabel: "mainline",
   actors: [],
 };
+
+function parseDirectorEffectsFromEvent(event: EventLog): DirectorEffects | null {
+  if (event.type !== "director_intervention") {
+    return null;
+  }
+
+  const payloadRecord = event.payload as Record<string, unknown>;
+  const candidate = payloadRecord.parsedEffects;
+  const parsed = directorEffectsSchema.safeParse(candidate);
+  return parsed.success ? parsed.data : null;
+}
 
 export default function Home() {
   const [timeline, setTimeline] = useState("mainline");
@@ -198,17 +210,25 @@ export default function Home() {
         <h2>实时事件流（最近 40 条）</h2>
         <div style={{ display: "grid", gap: "6px", maxHeight: "360px", overflowY: "auto" }}>
           {events.length === 0 ? <p>暂无事件</p> : null}
-          {events.map((event, index) => (
-            <article key={`${event.timestamp}-${index}`} style={{ padding: "8px", borderRadius: "8px", border: "1px solid #3f3f46" }}>
-              <p>
-                <strong>
-                  [{event.timelineLabel}] [Tick {event.tick}]
-                </strong>{" "}
-                {event.type}
-              </p>
-              <p>{event.summary}</p>
-            </article>
-          ))}
+          {events.map((event, index) => {
+            const parsedEffects = parseDirectorEffectsFromEvent(event);
+            return (
+              <article key={`${event.timestamp}-${index}`} style={{ padding: "8px", borderRadius: "8px", border: "1px solid #3f3f46" }}>
+                <p>
+                  <strong>
+                    [{event.timelineLabel}] [Tick {event.tick}]
+                  </strong>{" "}
+                  {event.type}
+                </p>
+                <p>{event.summary}</p>
+                {parsedEffects ? (
+                  <div style={{ marginTop: "6px", padding: "6px", background: "#0f172a", borderRadius: "6px", fontSize: "12px" }}>
+                    <p>Parsed Effects: {JSON.stringify(parsedEffects, null, 2)}</p>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
       </section>
     </main>
