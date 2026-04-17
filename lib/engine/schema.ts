@@ -35,6 +35,23 @@ export const directorInputSchema = z.object({
   timelineLabel: z.string().min(1).optional(),
 });
 
+export const directorEffectTagSchema = z.enum([
+  "weather_shift",
+  "hazard",
+  "assassin",
+  "ambush",
+  "morale_shock",
+  "reinforcement",
+  "ritual",
+]);
+
+export const directorEffectsSchema = z.object({
+  tags: z.array(directorEffectTagSchema).default([]),
+  intensity: z.enum(["low", "medium", "high"]).default("medium"),
+  targetActorIds: z.array(z.string().min(1)).default([]),
+  notes: z.string().default(""),
+});
+
 export const branchTimelineInputSchema = z.object({
   fromTimeline: z.string().min(1),
   atTick: z.number().int().min(0),
@@ -66,3 +83,4 @@ export type ActorIntent = z.infer<typeof actorIntentSchema>;
 export type EventLog = z.infer<typeof eventLogSchema>;
 export type BranchTimelineInput = z.infer<typeof branchTimelineInputSchema>;
 export type CharacterPsychology = z.infer<typeof characterPsychologySchema>;
+export type DirectorEffects = z.infer<typeof directorEffectsSchema>;

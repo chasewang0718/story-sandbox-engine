@@ -7,6 +7,7 @@ import {
 } from "./schema";
 import { getState, pushEvent, setState } from "./store";
 import { generateActorIntent } from "@/lib/llm/intents";
+import { parseDirectorIntervention } from "./directorParser";
 
 type TickResult = {
   worldState: ReturnType<typeof getState>;
@@ -65,12 +66,16 @@ export async function runTick(input: DirectorInput): Promise<TickResult> {
   const nextTick = current.tick + 1;
   const hero = current.actors[0];
   const villain = current.actors[1];
+  const parsedEffects = parseDirectorIntervention(parsedInput.intervention);
 
   const directorEvent = createEvent(current.timelineLabel, {
     tick: nextTick,
     type: "director_intervention",
     summary: `导演干预：${parsedInput.intervention}`,
-    payload: { intervention: parsedInput.intervention },
+    payload: {
+      intervention: parsedInput.intervention,
+      parsedEffects,
+    },
   });
 
   const [heroIntent, villainIntent] = await Promise.all([
@@ -118,7 +123,7 @@ export async function runTick(input: DirectorInput): Promise<TickResult> {
   const nextState = {
     ...current,
     tick: nextTick,
-    weather: parsedInput.intervention.includes("雨") ? "storm" : current.weather,
+    weather: parsedEffects.tags.includes("weather_shift") ? "storm" : current.weather,
     actors: updatedActors,
   };
 
