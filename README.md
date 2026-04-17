@@ -59,7 +59,7 @@ npm run start
 
 ## LLM 意图生成（Phase 1，可选）
 
-在 `.env.local` 中配置 `OPENAI_API_KEY`，并设置 `USE_LLM_INTENTS=true` 后，每个 Tick 会通过 **Vercel AI SDK** `generateObject` 按 `actorIntentSchema` 生成双方意图；默认模型为 `AI_MODEL_INTENT`（未设置时为 `gpt-4o-mini`）。未启用或未配置密钥时自动使用规则意图（便于本地与 CI）。
+在 `.env.local` 中配置 `OPENAI_API_KEY`，并设置 `USE_LLM_INTENTS=true` 后，每个 Tick 会通过 **Vercel AI SDK** `generateObject` 按 `actorIntentSchema` 生成双方意图；默认模型为 `AI_MODEL_INTENT`（未设置时为 `gpt-4o-mini`），失败重试次数由 `AI_INTENT_RETRY_COUNT` 控制（默认 `1`）。未启用或未配置密钥时自动使用规则意图（便于本地与 CI）。意图 Prompt 会携带角色 `psychology` 参数（traits/goals/motives/arc）作为行为信号。
 
 ## 当前目录结构
 

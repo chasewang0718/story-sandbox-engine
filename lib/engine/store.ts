@@ -23,6 +23,16 @@ export function createInitialState(timelineLabel = "mainline"): WorldState {
         location: "watchtower_gate",
         inventory: ["dagger", "flare"],
         hostility: 40,
+        psychology: {
+          traits: { cautious: 72, empathy: 66, aggression: 45 },
+          goals: ["survive_the_night", "rescue_captive"],
+          motives: { justice: 74, loyalty: 68, ambition: 33 },
+          arc: {
+            stage: "doubt",
+            triggerProgress: 0,
+            triggerThreshold: 3,
+          },
+        },
       },
       {
         id: "villain",
@@ -32,6 +42,16 @@ export function createInitialState(timelineLabel = "mainline"): WorldState {
         location: "inner_courtyard",
         inventory: ["longbow", "smoke_bomb"],
         hostility: 70,
+        psychology: {
+          traits: { strategic: 79, cruelty: 61, patience: 69 },
+          goals: ["complete_ritual", "neutralize_hero"],
+          motives: { control: 81, revenge: 58, survival: 47 },
+          arc: {
+            stage: "dominance",
+            triggerProgress: 0,
+            triggerThreshold: 4,
+          },
+        },
       },
     ],
   });

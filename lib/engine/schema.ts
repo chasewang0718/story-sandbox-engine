@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+export const characterPsychologySchema = z.object({
+  traits: z.record(z.string(), z.number().min(0).max(100)).default({}),
+  goals: z.array(z.string().min(1)).default([]),
+  motives: z.record(z.string(), z.number().min(0).max(100)).default({}),
+  arc: z.object({
+    stage: z.string().min(1),
+    triggerProgress: z.number().int().min(0),
+    triggerThreshold: z.number().int().min(1),
+  }),
+});
+
 export const actorSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -8,6 +19,7 @@ export const actorSchema = z.object({
   location: z.string().min(1),
   inventory: z.array(z.string()),
   hostility: z.number().int().min(0).max(100),
+  psychology: characterPsychologySchema,
 });
 
 export const worldStateSchema = z.object({
@@ -53,3 +65,4 @@ export type DirectorInput = z.infer<typeof directorInputSchema>;
 export type ActorIntent = z.infer<typeof actorIntentSchema>;
 export type EventLog = z.infer<typeof eventLogSchema>;
 export type BranchTimelineInput = z.infer<typeof branchTimelineInputSchema>;
+export type CharacterPsychology = z.infer<typeof characterPsychologySchema>;

@@ -56,12 +56,15 @@ Phase 7  事件驱动世界与 NPC LOD（规模化）
   - `OPENAI_API_KEY`
   - `USE_LLM_INTENTS`（`true` 时启用 LLM）
   - `AI_MODEL_INTENT`（默认 `gpt-4o-mini`）
+  - `AI_INTENT_RETRY_COUNT`（默认 `1`，表示首次失败后再重试一次）
 - **`runTick` 已为 async**，无 Key 或开关关闭时走规则路径（CI 稳定）。
+- LLM 调用细节已优化：`temperature: 0` 增强稳定性，失败按重试策略执行后再回退规则。
 
 ### 1.2 改造点
 
 - `lib/engine/runTick.ts`：在 `generateIntent` 处分支——规则 vs LLM。
 - Prompt 输入：**仅**包含该角色**可见**字段（从 `WorldState` 中裁剪），并注入**极简**世界观摘要（可先硬编码一段 `charterSummary` 常量，Phase 3 再外置）。
+- Prompt 已包含角色戏剧参数信号（`psychology`），为后续一致性判定与弧光推进打基础。
 
 ### 1.3 验收标准
 
@@ -87,14 +90,17 @@ Phase 7  事件驱动世界与 NPC LOD（规模化）
 ### 2.1 交付物
 
 - Zod：`directorEffectsSchema`（首版可极小：标签 + 强度 + 作用对象 id 列表）。
+- Zod：`characterPsychologySchema`（Traits / Goals / Motives / Arc 最小字段集）。
 - `lib/llm/director.ts`：`parseDirectorIntervention(text, stateSummary) -> schema`（`generateObject`）。
 - `lib/engine/resolve.ts`：拆分 **代码裁判** 与 **LLM 裁判** 入口；合并为**唯一** `Resolution`（数值 delta、flag）。
 - `runTick` 顺序固定：**解析（可选 LLM）→ 意图 → 结算 → 写状态**。
+- 在结算层增加角色一致性检查：意图是否与 Traits/Motives/Arc 阶段冲突；冲突时降权、重采样或记录异常事件。
 
 ### 2.2 验收标准
 
 - 无 Key 时：导演句仍参与规则关键词分支（与现逻辑兼容）或仅记录原文事件。
 - 有 Key 时：解析结果可持久化到 `event_logs.payload` 便于审计。
+- 角色参数参与后，连续多 Tick 结果中角色行为不出现无触发的剧烈反转（通过黄金场景回归验证）。
 
 **预估体量**：3–5 个工作日。
 
@@ -108,6 +114,7 @@ Phase 7  事件驱动世界与 NPC LOD（规模化）
 
 - 新表（示例命名，可调整）：
   - `projects`：`id`、`slug`、`title`、`charter_json`（规则与叙述分区）、`initial_world_state jsonb`、`world_epoch_start`（时间原点）、`schema_version`。
+- `initial_world_state` 中引入角色戏剧参数初值：Traits / Goals / Motives / Arc（随作品定义）。
 - 迁移：`supabase/sql/0003_projects_genesis.sql`。
 - `world_states` / `event_logs` 增加 `project_id`（UUID，可空过渡）或要求新数据必带。
 

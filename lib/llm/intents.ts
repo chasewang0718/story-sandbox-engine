@@ -3,7 +3,7 @@ import { openai } from "@ai-sdk/openai";
 import { Actor, ActorIntent, actorIntentSchema } from "@/lib/engine/schema";
 import { generateIntentRuleBased } from "@/lib/engine/ruleBasedIntents";
 import { DEFAULT_CHARTER_SUMMARY } from "./charter";
-import { getIntentModelId, shouldUseLlmIntents } from "./config";
+import { getIntentModelId, getIntentRetryCount, shouldUseLlmIntents } from "./config";
 
 function visibleSelf(actor: Actor): Record<string, unknown> {
   return {
@@ -14,6 +14,7 @@ function visibleSelf(actor: Actor): Record<string, unknown> {
     location: actor.location,
     inventory: actor.inventory,
     hostility: actor.hostility,
+    psychology: actor.psychology,
   };
 }
 
@@ -36,6 +37,7 @@ export async function generateActorIntentWithLlm(
   charterSummary: string = DEFAULT_CHARTER_SUMMARY,
 ): Promise<ActorIntent> {
   const model = openai(getIntentModelId());
+  const retryCount = getIntentRetryCount();
 
   const prompt = [
     charterSummary,
@@ -50,16 +52,26 @@ export async function generateActorIntentWithLlm(
     `若使用 move，可填 targetLocation；若 attack，应填 targetActorId 为「${target.id}」；若 use_item 填 itemName。`,
   ].join("\n");
 
-  const { object } = await generateObject({
-    model,
-    schema: actorIntentSchema,
-    prompt,
-  });
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retryCount; attempt += 1) {
+    try {
+      const { object } = await generateObject({
+        model,
+        schema: actorIntentSchema,
+        prompt,
+        temperature: 0,
+      });
 
-  return actorIntentSchema.parse({
-    ...object,
-    actorId: actor.id,
-  });
+      return actorIntentSchema.parse({
+        ...object,
+        actorId: actor.id,
+      });
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError;
 }
 
 /**
