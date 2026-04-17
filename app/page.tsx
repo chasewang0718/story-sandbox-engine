@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { directorEffectsSchema } from "@/lib/engine/schema";
 import type { DirectorEffects, EventLog, WorldState } from "@/lib/engine/schema";
+import { parseDirectorIntervention } from "@/lib/engine/directorParser";
 
 type BootPayload = {
   worldState: WorldState;
@@ -150,6 +151,12 @@ export default function Home() {
   }
 
   const aliveActors = useMemo(() => state.actors.filter((actor) => actor.hp > 0).length, [state.actors]);
+  const interventionPreview = useMemo(() => {
+    if (!intervention.trim()) {
+      return null;
+    }
+    return parseDirectorIntervention(intervention);
+  }, [intervention]);
 
   return (
     <main style={{ padding: "24px", display: "grid", gap: "16px", maxWidth: "980px", width: "100%", margin: "0 auto" }}>
@@ -181,6 +188,26 @@ export default function Home() {
         <button type="button" onClick={runTickAction} disabled={running} style={{ width: "160px", height: "36px" }}>
           {running ? "推演中..." : "运行 Tick"}
         </button>
+        {interventionPreview ? (
+          <div style={{ marginTop: "4px", padding: "8px", background: "#0f172a", borderRadius: "6px", fontSize: "12px", display: "grid", gap: "6px" }}>
+            <p>
+              <strong>发送前解析预览</strong> | 强度:
+              <span style={{ marginLeft: "6px", color: intensityColors[interventionPreview.intensity] }}>{interventionPreview.intensity}</span>
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {interventionPreview.tags.length === 0 ? (
+                <span style={{ opacity: 0.8 }}>无标签</span>
+              ) : (
+                interventionPreview.tags.map((tag) => (
+                  <span key={tag} style={{ background: "#1f2937", border: "1px solid #374151", borderRadius: "999px", padding: "2px 8px" }}>
+                    {directorTagLabels[tag] ?? tag}
+                  </span>
+                ))
+              )}
+            </div>
+            <p>目标角色: {interventionPreview.targetActorIds.length > 0 ? interventionPreview.targetActorIds.join(", ") : "未指定"}</p>
+          </div>
+        ) : null}
         {error ? <p style={{ color: "#ef4444" }}>{error}</p> : null}
       </section>
 
