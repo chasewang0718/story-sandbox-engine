@@ -29,6 +29,22 @@ function parseDirectorEffectsFromEvent(event: EventLog): DirectorEffects | null 
   return parsed.success ? parsed.data : null;
 }
 
+const directorTagLabels: Record<string, string> = {
+  weather_shift: "天气突变",
+  hazard: "环境危害",
+  assassin: "刺客介入",
+  ambush: "伏击",
+  morale_shock: "士气冲击",
+  reinforcement: "援军",
+  ritual: "仪式/法阵",
+};
+
+const intensityColors: Record<DirectorEffects["intensity"], string> = {
+  low: "#22c55e",
+  medium: "#f59e0b",
+  high: "#ef4444",
+};
+
 export default function Home() {
   const [timeline, setTimeline] = useState("mainline");
   const [intervention, setIntervention] = useState("天降大雨");
@@ -222,8 +238,24 @@ export default function Home() {
                 </p>
                 <p>{event.summary}</p>
                 {parsedEffects ? (
-                  <div style={{ marginTop: "6px", padding: "6px", background: "#0f172a", borderRadius: "6px", fontSize: "12px" }}>
-                    <p>Parsed Effects: {JSON.stringify(parsedEffects, null, 2)}</p>
+                  <div style={{ marginTop: "6px", padding: "8px", background: "#0f172a", borderRadius: "6px", fontSize: "12px", display: "grid", gap: "6px" }}>
+                    <p>
+                      <strong>结构化解析</strong> | 强度:
+                      <span style={{ marginLeft: "6px", color: intensityColors[parsedEffects.intensity] }}>{parsedEffects.intensity}</span>
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {parsedEffects.tags.length === 0 ? (
+                        <span style={{ opacity: 0.8 }}>无标签</span>
+                      ) : (
+                        parsedEffects.tags.map((tag) => (
+                          <span key={tag} style={{ background: "#1f2937", border: "1px solid #374151", borderRadius: "999px", padding: "2px 8px" }}>
+                            {directorTagLabels[tag] ?? tag}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                    <p>目标角色: {parsedEffects.targetActorIds.length > 0 ? parsedEffects.targetActorIds.join(", ") : "未指定"}</p>
+                    <p style={{ opacity: 0.85 }}>原始输入: {parsedEffects.notes}</p>
                   </div>
                 ) : null}
               </article>
