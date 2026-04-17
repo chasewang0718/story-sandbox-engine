@@ -8,6 +8,7 @@ import {
 import { getState, pushEvent, setState } from "./store";
 import { generateActorIntent } from "@/lib/llm/intents";
 import { parseDirectorIntervention } from "./directorParser";
+import { evaluateIntentConsistency } from "./intentConsistency";
 
 type TickResult = {
   worldState: ReturnType<typeof getState>;
@@ -82,12 +83,19 @@ export async function runTick(input: DirectorInput): Promise<TickResult> {
     generateActorIntent(hero, villain, parsedInput.intervention),
     generateActorIntent(villain, hero, parsedInput.intervention),
   ]);
+  const consistencyAssessments = [
+    evaluateIntentConsistency(hero, heroIntent),
+    evaluateIntentConsistency(villain, villainIntent),
+  ];
 
   const intentEvent = createEvent(current.timelineLabel, {
     tick: nextTick,
     type: "intent_generated",
     summary: "主角与反派生成行动意图。",
-    payload: { intents: [heroIntent, villainIntent] },
+    payload: {
+      intents: [heroIntent, villainIntent],
+      consistencyAssessments,
+    },
   });
 
   const resolution = resolveConflict(heroIntent, villainIntent);

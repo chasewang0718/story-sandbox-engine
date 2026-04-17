@@ -26,6 +26,12 @@ describe("runTick", () => {
       "conflict_resolved",
       "state_updated",
     ]);
+    const intentPayload = result.events[1]?.payload as {
+      consistencyAssessments?: Array<{ actorId: string; score: number }>;
+    };
+    expect(intentPayload.consistencyAssessments).toBeDefined();
+    expect(intentPayload.consistencyAssessments).toHaveLength(2);
+    expect(intentPayload.consistencyAssessments?.every((item) => item.score >= 0 && item.score <= 100)).toBe(true);
 
     expect(getHistory()).toHaveLength(4);
   });
